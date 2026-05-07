@@ -156,6 +156,10 @@ class AppPrefs(context: Context) {
         get() = prefs.getInt("min_audio_upload_seconds", 4)
         set(value) = prefs.edit().putInt("min_audio_upload_seconds", value.coerceIn(1, 120)).apply()
 
+    var rollingContextWindowSeconds: Int
+        get() = prefs.getInt("rolling_context_window_seconds", 180)
+        set(value) = prefs.edit().putInt("rolling_context_window_seconds", value.coerceIn(30, 1800)).apply()
+
     var junkFilterEnabled: Boolean
         get() = prefs.getBoolean("junk_filter_enabled", true)
         set(value) = prefs.edit().putBoolean("junk_filter_enabled", value).apply()

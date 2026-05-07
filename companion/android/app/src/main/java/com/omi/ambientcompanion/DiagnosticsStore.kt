@@ -12,6 +12,7 @@ class DiagnosticsStore(context: Context) {
     fun write(reason: String) {
         val spoolStats = CaptureSpoolStore(appContext).stats()
         val fallbackStats = FallbackSegmentQueue(appContext).stats()
+        val rollingContext = RollingContextStore(appContext).stats()
         val currentSession = CaptureSessionStore(appContext).current()
         val prefs = AppPrefs(appContext)
         val json = JSONObject()
@@ -36,6 +37,7 @@ class DiagnosticsStore(context: Context) {
                     .put("android_on_device_only", true),
             )
             .put("context", ContextSignals.snapshot())
+            .put("rolling_context", rollingContext)
             .put("spool", JSONObject(spoolStats))
             .put("fallback_segments", JSONObject(fallbackStats))
             .put("current_session", currentSession)

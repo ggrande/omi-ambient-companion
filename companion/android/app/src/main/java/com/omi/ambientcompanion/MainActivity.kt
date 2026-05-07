@@ -343,6 +343,7 @@ class MainActivity : Activity() {
                 prefs.allowLocalSttFallback = enabled
                 AuditLog(this@MainActivity).record("local_speech_recognition_changed", mapOf("enabled" to enabled))
             })
+            addView(text("Rolling context: ${prefs.rollingContextWindowSeconds}s, recent=${RollingContextStore(this@MainActivity).summary(3)}", 12))
             addView(text("Junk filter: ${if (prefs.junkFilterEnabled) "on" else "off"}", 12))
             addView(text(DevicePlacementMonitor.label(prefs), 12))
             addView(text("Minimum raw audio upload: ${prefs.minAudioUploadSeconds}s", 12))
@@ -431,6 +432,25 @@ class MainActivity : Activity() {
                 },
             ))
             addView(row(
+                button("Low power context") {
+                    prefs.sampledVadEnabled = true
+                    prefs.sampledVadIntervalMs = 60_000L
+                    prefs.sampledVadWindowMs = 700L
+                    prefs.continuousMicWatchEnabled = false
+                    prefs.minAudioUploadSeconds = 8
+                    prefs.rollingContextWindowSeconds = 300
+                    AuditLog(this@MainActivity).record("capture_profile_set", mapOf("profile" to "low_power_context"))
+                },
+                button("Context 2m") {
+                    prefs.rollingContextWindowSeconds = 120
+                    AuditLog(this@MainActivity).record("rolling_context_window_changed", mapOf("seconds" to prefs.rollingContextWindowSeconds))
+                },
+                button("Context 5m") {
+                    prefs.rollingContextWindowSeconds = 300
+                    AuditLog(this@MainActivity).record("rolling_context_window_changed", mapOf("seconds" to prefs.rollingContextWindowSeconds))
+                },
+            ))
+            addView(row(
                 button("Segments 30s") {
                     prefs.maxActiveSegmentSeconds = 30
                     AuditLog(this@MainActivity).record("segment_rollover_changed", mapOf("seconds" to prefs.maxActiveSegmentSeconds))
@@ -499,6 +519,7 @@ class MainActivity : Activity() {
                 val currentSession = CaptureSessionStore(this).current()
                 val spool = CaptureSpoolStore(this).stats()
                 val fallback = FallbackSegmentQueue(this).stats()
+                val rollingContext = RollingContextStore(this).stats()
                 storage.text = buildString {
                     appendLine("Sync: ${prefs.lastSyncLabel}")
                     appendLine("Omi trace: ${prefs.lastOmiSyncTrace}")
@@ -509,6 +530,7 @@ class MainActivity : Activity() {
                             "${formatBytes((spool["bytes"] as? Number)?.toLong() ?: 0L)}, oldest pending ${spool["oldest_pending_seconds"]}s",
                     )
                     appendLine("Fallback text: ${fallback["pending_count"]} pending, sources=${fallback["sources"]}")
+                    appendLine("Rolling context: ${rollingContext.optInt("count")} item(s), candidates=${rollingContext.optInt("conversation_candidates")}, window=${rollingContext.optInt("window_seconds")}s")
                     appendLine("Local speech recognition: ${if (prefs.allowLocalSttFallback) "on" else "off"}, statuses=${spool["local_stt_statuses"]}")
                     appendLine("Session: ${currentSession?.optString("status", "idle") ?: "idle"} ${currentSession?.optString("reason", "") ?: ""}")
                     appendLine("Foreground: ${ContextSignals.foregroundPackage.orEmpty().ifBlank { "unknown" }}")
@@ -588,6 +610,7 @@ class MainActivity : Activity() {
                 appendLine("Sampled VAD: ${if (prefs.sampledVadEnabled) "${prefs.sampledVadWindowMs}ms checks every ${prefs.sampledVadIntervalMs / 1000}s" else "off"}")
                 appendLine("Auto segment rollover: ${prefs.maxActiveSegmentSeconds}s")
                 appendLine("Minimum raw audio upload: ${prefs.minAudioUploadSeconds}s")
+                appendLine("Rolling context window: ${prefs.rollingContextWindowSeconds}s")
                 appendLine("Local speech recognition: ${if (prefs.allowLocalSttFallback) "on" else "off"}")
                 appendLine("Junk filter: ${if (prefs.junkFilterEnabled) "on" else "off"}")
                 appendLine(DevicePlacementMonitor.label(prefs))

@@ -89,7 +89,8 @@ class AmbientForegroundMicService : Service() {
             return
         }
         prefs.explicitSessionStarted = true
-        sessionStore.start(reason)
+        val preMicContext = RollingContextStore(this).summary()
+        sessionStore.start(reason, preMicContext)
         ContextSignals.lastTriggerReason = reason
         paused.set(false)
         privateMode.set(false)
@@ -98,7 +99,7 @@ class AmbientForegroundMicService : Service() {
         communicationMonitor.start()
         startPolicyLoop()
         captureThread = thread(name = "ambient-vad-capture") { captureLoop() }
-        audit.record("capture_started", mapOf("reason" to reason))
+        audit.record("capture_started", mapOf("reason" to reason, "pre_mic_context" to preMicContext.take(240)))
         pluginClient.sendTelemetry("capture_started", lastHealth, ContextSignals.snapshot())
     }
 

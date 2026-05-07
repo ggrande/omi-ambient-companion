@@ -77,6 +77,7 @@ Without the optional controller, the companion still uses direct Omi auth for au
 8. Return to the app and check `Preflight`.
 9. Optional: open `Advanced settings`, tap `Check voice profile`, and enable `Desk gate` or `Face-down gate` if you want placement-gated capture.
 10. Confirm `Local speech recognition` is on unless you are intentionally testing without Android on-device STT fallback.
+11. Optional: tap `Low power context` if you are testing battery behavior and pre-mic rolling context.
 
 The `Preflight` section should show `OK` for Omi user id, Omi auth token, microphone, notifications, accessibility, notification listener, and battery. Plugin rows are optional and may show `SKIPPED`.
 
@@ -133,6 +134,22 @@ Before collecting test audio:
 3. Capture and close a short speech session.
 4. Confirm diagnostics show local speech recognition enabled and a local STT status such as `completed`, `failed`, or `unavailable`.
 5. Turn `Local speech recognition` off, capture another session, and confirm local STT does not run while raw audio sync still works.
+
+### Rolling Pre-Mic Context
+
+1. Keep full mic capture off.
+2. Open Live Transcribe, Live Caption, or a meeting app with captions.
+3. Speak for 1-2 minutes while the companion remains idle.
+4. Confirm diagnostics show `rolling_context` entries and the app UI shows a rolling context count.
+5. Tap `Start`, speak again, then share diagnostics.
+6. Confirm the current session includes `pre_mic_context` summarizing recent caption/notification context.
+
+### Low Power Context Profile
+
+1. Open `Advanced settings`.
+2. Tap `Low power context`.
+3. Confirm sampled VAD is enabled with a long interval, continuous mic watch is off, and rolling context is 5 minutes.
+4. Run a 30-minute battery probe and record battery percent, rolling context count, raw audio spool count, and Omi trace/discard state.
 
 ### Communication Awareness
 

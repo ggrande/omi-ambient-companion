@@ -11,7 +11,7 @@ class CaptureSessionStore(context: Context) {
     private val historyFile = File(context.filesDir, "ambient_sessions.jsonl")
 
     @Synchronized
-    fun start(reason: String): String {
+    fun start(reason: String, preMicContext: String = ""): String {
         val existing = current()
         if (existing != null && existing.optString("status") == "running") return existing.optString("session_id")
         val sessionId = UUID.randomUUID().toString()
@@ -21,6 +21,7 @@ class CaptureSessionStore(context: Context) {
             .put("last_updated_at", Instant.now().toString())
             .put("status", "running")
             .put("reason", reason)
+            .put("pre_mic_context", preMicContext)
         currentFile.writeText(json.toString())
         appendHistory(json)
         return sessionId

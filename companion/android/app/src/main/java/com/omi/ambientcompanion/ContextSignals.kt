@@ -38,20 +38,24 @@ object ContextSignals {
         if (!prefs.allowCaptionFallback) return
         val normalized = text.trim().replace(Regex("\\s+"), " ")
         if (normalized.length < 3 || normalized == lastCaptionText) return
+        var decision = ConversationQualityFilter.evaluate(normalized, source)
         if (prefs.junkFilterEnabled) {
-            val decision = ConversationQualityFilter.evaluate(normalized, source)
             if (!decision.allow) {
+                RollingContextStore(context).record(source.apiName(), normalized, decision.reason, foregroundPackage, false)
                 AuditLog(context).record(
                     "fallback_segment_rejected_junk",
                     mapOf("source" to source.name, "reason" to decision.reason, "text" to normalized.take(80)),
                 )
                 return
             }
+        } else {
+            decision = ConversationQualityFilter.evaluate(normalized, source)
         }
         lastCaptionText = normalized
         captionFallbackActive = true
         lastTriggerReason = source.name.lowercase()
         val health = AmbientForegroundMicService.lastHealthState()
+        RollingContextStore(context).record(source.apiName(), normalized, decision.reason, foregroundPackage, decision.allow)
         FallbackSegmentQueue(context).enqueue(
             FallbackSegment(
                 text = normalized,
@@ -80,6 +84,13 @@ object ContextSignals {
         if (!trigger.shouldStartCapture) return
         lastNotificationAtMs = System.currentTimeMillis()
         lastTriggerReason = trigger.reason
+        RollingContextStore(context).record(
+            "notification",
+            listOf(title, text, subText, bigText).joinToString(" "),
+            trigger.reason,
+            packageName,
+            trigger.shouldQueueCaption,
+        )
         AuditLog(context).record("notification_trigger", mapOf("package" to packageName, "title" to title.take(80)))
         if (trigger.shouldQueueCaption) {
             enqueueCaption(context, text.ifBlank { title }, FallbackSource.LIVE_CAPTION_NOTIFICATION)
@@ -118,4 +129,12 @@ object ContextSignals {
         .put("last_notification_at_ms", lastNotificationAtMs)
         .put("last_route_change_at_ms", lastRouteChangeAtMs)
         .put("last_high_risk_at_ms", lastHighRiskAtMs)
+
+    private fun FallbackSource.apiName(): String = when (this) {
+        FallbackSource.LOCAL_STT -> "local_stt"
+        FallbackSource.ACCESSIBILITY_CAPTION -> "accessibility_caption"
+        FallbackSource.LIVE_CAPTION_NOTIFICATION -> "live_caption"
+        FallbackSource.SOUND_NOTIFICATION -> "sound_notification"
+        FallbackSource.GAP_MARKER -> "gap_marker"
+    }
 }
