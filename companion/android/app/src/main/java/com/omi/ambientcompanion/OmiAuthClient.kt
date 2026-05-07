@@ -145,7 +145,7 @@ class OmiAuthClient(private val context: Context) {
             .sortedBy { it.start }
             .take(500)
         val usable = if (prefs.junkFilterEnabled) {
-            candidates.filter { ConversationQualityFilter.evaluate(it.text, it.source).allow }
+            candidates.filter { ConversationQualityFilter.evaluate(it).allow }
         } else {
             candidates
         }

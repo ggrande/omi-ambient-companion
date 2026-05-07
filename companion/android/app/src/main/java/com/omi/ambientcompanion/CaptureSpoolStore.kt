@@ -135,10 +135,12 @@ class CaptureSpoolStore(private val context: Context) {
         return mapOf(
             "pending_count" to pending.size,
             "synced_count" to items.count { it.status == "synced" },
+            "filtered_short_count" to items.count { it.status == "filtered_short" },
             "bytes" to items.sumOf { it.bytes },
             "oldest_pending_seconds" to oldestPendingSeconds,
             "max_storage_mb" to prefs.maxStorageMb,
             "min_free_storage_mb" to prefs.minFreeStorageMb,
+            "min_audio_upload_seconds" to prefs.minAudioUploadSeconds,
         )
     }
 

@@ -340,6 +340,7 @@ class MainActivity : Activity() {
             addView(text("Continuous mic watch: ${if (prefs.continuousMicWatchEnabled) "on" else "off"}", 12))
             addView(text("Junk filter: ${if (prefs.junkFilterEnabled) "on" else "off"}", 12))
             addView(text(DevicePlacementMonitor.label(prefs), 12))
+            addView(text("Minimum raw audio upload: ${prefs.minAudioUploadSeconds}s", 12))
             addView(text("Auto segment rollover: every ${prefs.maxActiveSegmentSeconds}s while speech/noise stays active", 12))
             addView(text("Companion associations: ${CompanionDeviceSupport.associationCount(this@MainActivity)}", 12))
             addView(row(
@@ -438,6 +439,20 @@ class MainActivity : Activity() {
                     AuditLog(this@MainActivity).record("segment_rollover_changed", mapOf("seconds" to prefs.maxActiveSegmentSeconds))
                 },
             ))
+            addView(row(
+                button("Min audio 4s") {
+                    prefs.minAudioUploadSeconds = 4
+                    AuditLog(this@MainActivity).record("min_audio_upload_changed", mapOf("seconds" to prefs.minAudioUploadSeconds))
+                },
+                button("Min audio 8s") {
+                    prefs.minAudioUploadSeconds = 8
+                    AuditLog(this@MainActivity).record("min_audio_upload_changed", mapOf("seconds" to prefs.minAudioUploadSeconds))
+                },
+                button("Min audio 12s") {
+                    prefs.minAudioUploadSeconds = 12
+                    AuditLog(this@MainActivity).record("min_audio_upload_changed", mapOf("seconds" to prefs.minAudioUploadSeconds))
+                },
+            ))
             addView(button("Pair companion device") { CompanionDeviceSupport.requestAssociation(this@MainActivity) })
             addView(text("Storage", 16, bold = true))
             addView(row(
@@ -485,6 +500,7 @@ class MainActivity : Activity() {
                     appendLine(AudioSystemSignals.label(this@MainActivity))
                     appendLine(
                         "Audio spool: ${spool["pending_count"]} pending, ${spool["synced_count"]} synced, " +
+                            "${spool["filtered_short_count"]} filtered short, " +
                             "${formatBytes((spool["bytes"] as? Number)?.toLong() ?: 0L)}, oldest pending ${spool["oldest_pending_seconds"]}s",
                     )
                     appendLine("Fallback text: ${fallback["pending_count"]} pending, sources=${fallback["sources"]}")
@@ -565,6 +581,7 @@ class MainActivity : Activity() {
                 appendLine("Mic mode: ${if (prefs.continuousMicWatchEnabled) "continuous watch can auto-start from context" else "manual only; context triggers stay armed/idle"}")
                 appendLine("Sampled VAD: ${if (prefs.sampledVadEnabled) "${prefs.sampledVadWindowMs}ms checks every ${prefs.sampledVadIntervalMs / 1000}s" else "off"}")
                 appendLine("Auto segment rollover: ${prefs.maxActiveSegmentSeconds}s")
+                appendLine("Minimum raw audio upload: ${prefs.minAudioUploadSeconds}s")
                 appendLine("Junk filter: ${if (prefs.junkFilterEnabled) "on" else "off"}")
                 appendLine(DevicePlacementMonitor.label(prefs))
                 appendLine("Omi trained voice profile: ${speechProfileLabel()}")

@@ -30,6 +30,14 @@ This is not an Omi plugin and does not modify the official Omi app. The Ambient 
 
 ## Build
 
+Download from GitHub:
+
+- The `Ambient Companion Android` workflow uploads a verified debug APK on pull requests, pushes to `main`, and manual runs.
+- Version tags such as `v0.1.1` publish the same verified APK to a GitHub Release.
+- Download `omi-ambient-companion-debug-...apk`, not an APK from the official Omi app.
+
+Local build:
+
 ```powershell
 companion\android\gradlew.bat -p companion\android :app:assembleDebug --no-build-cache
 ```
@@ -65,6 +73,7 @@ It installs next to the official/published Omi app and does not replace or modif
 10. Tap `Start`.
 11. Speak for 30-60 seconds, tap `Stop`, then tap `Sync`.
 12. For junk reduction, open `Advanced settings` and leave `Junk filter` on. Optionally enable `Desk gate` or `Face-down gate` if you only want capture while the phone appears to be resting on a desk.
+13. Leave `Minimum raw audio upload` at `4s` unless you are seeing many tiny accidental clips. Increase it from `Advanced settings` for stricter upload reduction.
 
 Optional plugin setup:
 
@@ -89,6 +98,7 @@ The app does not auto-record after reboot. Boot handling only resets stale recov
 - Companion Device Manager support requires a real user-approved device association; the app does not fake companion status.
 - Call/meeting capture is degraded when Android blocks audio. Captions/transcripts are labeled as fallback sources.
 - Desk/face-down gates are local safety gates. They use Android sensors and are best-effort; they do not prove consent or context.
+- Short raw-audio sessions and obvious caption/system junk are filtered locally when the junk filter is enabled. This is a noise-reduction control, not proof of speaker identity or consent.
 
 ## Known Limits
 

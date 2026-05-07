@@ -73,11 +73,15 @@ object SyncWorker {
         val uploaded = mutableListOf<String>()
         val uploadedSessions = mutableListOf<String>()
         val pendingSpool = spool.list("pending")
-        if (pendingSpool.isNotEmpty()) {
-            prefs.lastSyncLabel = "Uploading ${pendingSpool.size} audio segment(s)"
-        }
         if (prefs.allowAudioUpload) {
-            pendingSpool.forEach { meta ->
+            val uploadableSpool = filterUploadableAudioSessions(context, spool, pendingSpool, prefs, audit)
+            val filteredAudioCount = pendingSpool.size - uploadableSpool.size
+            if (uploadableSpool.isNotEmpty()) {
+                prefs.lastSyncLabel = "Uploading ${uploadableSpool.size} audio segment(s)"
+            } else if (filteredAudioCount > 0) {
+                terminalLabel = "Filtered $filteredAudioCount short audio session(s); nothing long enough to upload"
+            }
+            uploadableSpool.forEach { meta ->
                 attempted = true
                 val omiResult = omiAuth.uploadAudioFile(meta, spool.readPlainChunks(meta))
                 val uploadedToOmi = omiResult.success && omiResult.hasServerConversationSignal()
@@ -130,7 +134,7 @@ object SyncWorker {
             prefs.lastSyncLabel = "Last sync failed; retry scheduled"
             scheduleBackoff(prefs, audit)
         } else {
-            prefs.lastSyncLabel = "Nothing pending to sync"
+            prefs.lastSyncLabel = terminalLabel ?: "Nothing pending to sync"
         }
     }
 
@@ -158,11 +162,42 @@ object SyncWorker {
     ): List<FallbackSegment> {
         val pending = queue.pending()
         if (!prefs.junkFilterEnabled) return pending
-        val rejected = pending.filter { !ConversationQualityFilter.evaluate(it.text, it.source).allow }
+        val decisions = pending.map { it to ConversationQualityFilter.evaluate(it) }
+        val rejected = decisions.filter { !it.second.allow }
         if (rejected.isNotEmpty()) {
-            queue.clearUploaded(rejected.map { it.id }.toSet())
-            audit.record("fallback_segments_junk_removed", mapOf("count" to rejected.size))
+            queue.clearUploaded(rejected.map { it.first.id }.toSet())
+            val reasons = rejected.groupingBy { it.second.reason }.eachCount()
+            audit.record(
+                "fallback_segments_junk_removed",
+                mapOf("count" to rejected.size, "reasons" to reasons.entries.joinToString(",") { "${it.key}:${it.value}" }),
+            )
         }
+        return decisions.filter { it.second.allow }.map { it.first }
+    }
+
+    private fun filterUploadableAudioSessions(
+        context: Context,
+        spool: CaptureSpoolStore,
+        pending: List<SpoolMetadata>,
+        prefs: AppPrefs,
+        audit: AuditLog,
+    ): List<SpoolMetadata> {
+        if (!prefs.junkFilterEnabled || pending.isEmpty()) return pending
+        val minSeconds = prefs.minAudioUploadSeconds
+        val rejected = pending.filter { it.durationEstimateSeconds < minSeconds.toDouble() }
+        if (rejected.isEmpty()) return pending
+
+        spool.markStatus(rejected.map { it.filePath }, "filtered_short")
+        CaptureActivityStore(context).markFiltered(rejected.map { it.sessionId })
+        audit.record(
+            "spool_audio_filtered_short",
+            mapOf(
+                "count" to rejected.size,
+                "min_seconds" to minSeconds,
+                "max_rejected_duration" to (rejected.maxOfOrNull { it.durationEstimateSeconds } ?: 0.0),
+            ),
+        )
+        prefs.lastOmiSyncTrace = "Filtered short audio: ${rejected.size} below ${minSeconds}s"
         return pending - rejected.toSet()
     }
 

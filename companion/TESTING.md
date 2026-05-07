@@ -19,7 +19,8 @@ companion/android/app/build/outputs/apk/debug/omi-ambient-companion-debug-v0.1.0
 ```
 
 GitHub Actions also uploads the debug APK from the `Ambient Companion Android` workflow. Download the artifact named
-`omi-ambient-companion-standalone-debug-apk`, not the regular Omi app APK.
+`omi-ambient-companion-standalone-debug-apk-...`, not the regular Omi app APK. Tagged builds such as `v0.1.1`
+also attach the verified debug APK and `apk-badging.txt` to the GitHub Release.
 
 Before installing, verify the standalone identity:
 
@@ -66,7 +67,7 @@ Without the optional controller, the companion still uses direct Omi auth for au
 
 ## First Install
 
-1. Install `app-debug.apk`.
+1. Install `omi-ambient-companion-debug-...apk`.
 2. Open `Omi Ambient Companion`.
 3. Tap `Sign in with Omi` and complete auth.
 4. Tap `Permissions & setup` and grant microphone, notifications, and Bluetooth route permission if prompted.
@@ -77,6 +78,16 @@ Without the optional controller, the companion still uses direct Omi auth for au
 9. Optional: open `Advanced settings`, tap `Check voice profile`, and enable `Desk gate` or `Face-down gate` if you want placement-gated capture.
 
 The `Preflight` section should show `OK` for Omi user id, Omi auth token, microphone, notifications, accessibility, notification listener, and battery. Plugin rows are optional and may show `SKIPPED`.
+
+## Privacy And Consent Checks
+
+Before collecting test audio:
+
+- Confirm Android shows the normal microphone privacy indicator whenever capture is running.
+- Confirm the persistent `Omi Ambient Companion` microphone notification is visible during active mic capture.
+- Confirm the user intentionally tapped `Start` and accepted microphone watch consent.
+- Do not test protected call recording claims. Android may block or degrade call/meeting audio, and the app must report that honestly.
+- Treat fallback caption/local-STT text as degraded fallback material. It is labeled before upload and should not be counted as normal raw-audio transcript.
 
 ## Smoke Tests
 
@@ -102,9 +113,11 @@ The `Preflight` section should show `OK` for Omi user id, Omi auth token, microp
 
 1. Open `Advanced settings`.
 2. Confirm `Junk filter` is on.
-3. Optional: tap `Desk gate`, place the phone flat/stationary, and confirm `Placement gate` becomes allowed.
-4. Optional: tap `Face-down gate`, place the phone face down on a desk, and confirm capture is allowed only in that placement.
-5. Send a short self-notification or system notification and confirm the log shows `fallback_segment_rejected_junk` rather than a new fallback conversation.
+3. Confirm `Minimum raw audio upload` is set to `4s`, or raise it to `8s`/`12s` if you are intentionally testing stricter accidental-clip reduction.
+4. Optional: tap `Desk gate`, place the phone flat/stationary, and confirm `Placement gate` becomes allowed.
+5. Optional: tap `Face-down gate`, place the phone face down on a desk, and confirm capture is allowed only in that placement.
+6. Send a short self-notification or system notification and confirm the log shows `fallback_segments_junk_removed` rather than a new fallback conversation.
+7. Capture a very short noise burst under the minimum raw-audio threshold and confirm diagnostics show `filtered short` instead of a raw upload.
 
 ### Accessibility Caption Fallback
 
@@ -138,6 +151,11 @@ Please send:
 - The last 30-50 audit log lines.
 - Whether the persistent mic notification was visible.
 - Whether Omi conversations appeared, or only controller/plugin storage updated.
+- Whether `Omi trace` showed conversation IDs, `discarded=true`, or a short-audio filter message.
+
+Do not send:
+
+- Omi auth tokens, Firebase tokens, `.env` files, `local.properties`, APK signing keys, raw databases, or unrelated private logs.
 
 Useful optional adb commands:
 

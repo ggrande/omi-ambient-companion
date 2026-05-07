@@ -5,7 +5,18 @@ on:
     paths:
       - "companion/android/**"
       - ".github/workflows/ambient_companion_android.yml"
+      - "README.md"
+      - "companion/README.md"
+      - "companion/TESTING.md"
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -18,14 +29,38 @@ jobs:
           java-version: "21"
       - name: Build companion APK
         run: ./companion/android/gradlew -p companion/android :app:testDebugUnitTest :app:assembleDebug --no-build-cache
-      - name: Verify standalone APK identity
+      - name: Locate debug APK
+        id: apk
+        shell: bash
         run: |
+          set -euo pipefail
+          APK_PATH="$(ls companion/android/app/build/outputs/apk/debug/omi-ambient-companion-debug-v*.apk | sort -V | tail -1)"
+          APK_NAME="$(basename "$APK_PATH")"
+          echo "path=$APK_PATH" >> "$GITHUB_OUTPUT"
+          echo "name=$APK_NAME" >> "$GITHUB_OUTPUT"
+      - name: Verify standalone APK identity
+        shell: bash
+        run: |
+          set -euo pipefail
           AAPT="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/aapt"
-          "$AAPT" dump badging companion/android/app/build/outputs/apk/debug/omi-ambient-companion-debug-v0.1.0.apk | tee apk-badging.txt
+          "$AAPT" dump badging "${{ steps.apk.outputs.path }}" | tee apk-badging.txt
           grep "package: name='com.omi.ambientcompanion'" apk-badging.txt
           grep "application-label:'Omi Ambient Companion'" apk-badging.txt
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: omi-ambient-companion-standalone-debug-apk
-          path: companion/android/app/build/outputs/apk/debug/omi-ambient-companion-debug-v0.1.0.apk
+          name: omi-ambient-companion-standalone-debug-apk-${{ github.run_number }}
+          path: |
+            ${{ steps.apk.outputs.path }}
+            apk-badging.txt
+      - name: Publish tagged debug release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ github.ref_name }}
+          APK_PATH: ${{ steps.apk.outputs.path }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release view "$TAG_NAME" >/dev/null 2>&1 || gh release create "$TAG_NAME" --title "Omi Ambient Companion $TAG_NAME" --notes "Verified standalone debug APK for Omi Ambient Companion."
+          gh release upload "$TAG_NAME" "$APK_PATH" apk-badging.txt --clobber

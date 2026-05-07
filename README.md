@@ -27,6 +27,14 @@ label: Omi Ambient Companion
 
 ## Build Companion APK
 
+Download from GitHub:
+
+- Every push to `main`, pull request, and manual run uploads a verified debug APK artifact from the `Ambient Companion Android` workflow.
+- Version tags such as `v0.1.1` also publish a GitHub Release with the debug APK and `apk-badging.txt`.
+- Use the artifact or release asset whose filename starts with `omi-ambient-companion-debug-`.
+
+Local build:
+
 ```powershell
 companion\android\gradlew.bat -p companion\android :app:assembleDebug --no-build-cache
 ```
@@ -55,6 +63,14 @@ Verify identity:
 
 See `companion/README.md` and `companion/TESTING.md` for details.
 
+## Public Tester Quick Start
+
+1. Download the latest APK from a tagged GitHub Release, or from the latest successful `Ambient Companion Android` workflow artifact.
+2. Confirm Android shows the app name as `Omi Ambient Companion`; it should install next to the official Omi app.
+3. Sign in with Omi before testing sync.
+4. Keep `Junk filter` enabled. The companion filters short raw-audio sessions and obvious caption/system junk before upload.
+5. Use `Share Diagnostics` when reporting issues. Do not include `.env` files, tokens, APK signing material, databases, or raw logs with secrets.
+
 ## Optional Plugin
 
 The Ambient Second Brain Controller plugin is optional. Direct Omi audio sync works without it. Use the plugin when you want:
@@ -74,6 +90,7 @@ See `plugins/ambient-second-brain-controller/README.md`.
 - Accessibility is used only for context and allowed caption/transcript fallback.
 - Private mode is local and wins over plugin policy.
 - The app does not auto-record after reboot.
+- Fallback caption/local-STT text is labeled as fallback material and should not be interpreted as normal raw-audio transcription.
 
 ## Upstream
 

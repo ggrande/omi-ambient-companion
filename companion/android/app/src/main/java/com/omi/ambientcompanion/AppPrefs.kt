@@ -152,6 +152,10 @@ class AppPrefs(context: Context) {
         get() = prefs.getInt("max_active_segment_seconds", 60)
         set(value) = prefs.edit().putInt("max_active_segment_seconds", value.coerceIn(15, 600)).apply()
 
+    var minAudioUploadSeconds: Int
+        get() = prefs.getInt("min_audio_upload_seconds", 4)
+        set(value) = prefs.edit().putInt("min_audio_upload_seconds", value.coerceIn(1, 120)).apply()
+
     var junkFilterEnabled: Boolean
         get() = prefs.getBoolean("junk_filter_enabled", true)
         set(value) = prefs.edit().putBoolean("junk_filter_enabled", value).apply()

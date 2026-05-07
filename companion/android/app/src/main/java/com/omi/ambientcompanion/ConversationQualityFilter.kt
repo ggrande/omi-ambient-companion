@@ -1,5 +1,6 @@
 package com.omi.ambientcompanion
 
+import java.time.Duration
 import java.util.Locale
 
 data class ConversationQualityDecision(
@@ -60,18 +61,35 @@ object ConversationQualityFilter {
         "all rights reserved",
     )
 
-    fun evaluate(text: String, source: FallbackSource? = null): ConversationQualityDecision {
+    fun evaluate(segment: FallbackSegment): ConversationQualityDecision {
+        val durationMs = Duration.between(segment.start, segment.end).toMillis().coerceAtLeast(0L)
+        return evaluate(segment.text, segment.source, durationMs)
+    }
+
+    fun evaluate(text: String, source: FallbackSource? = null, durationMs: Long? = null): ConversationQualityDecision {
         val normalized = text.trim().replace(Regex("\\s+"), " ")
         val lower = normalized.lowercase(Locale.US)
         if (normalized.isBlank()) return ConversationQualityDecision(false, "blank", 0.0)
         if (source == FallbackSource.GAP_MARKER) return ConversationQualityDecision(false, "gap_marker_not_conversation", 0.0)
 
         val hasIntent = intentPhrases.any { lower.contains(it) }
+        val duration = durationMs?.coerceAtLeast(0L)
         if (systemJunkPhrases.any { lower.contains(it) }) {
             return ConversationQualityDecision(false, "system_ui_text", 0.05)
         }
         if (!hasIntent && mediaPhrases.any { lower.contains(it) }) {
             return ConversationQualityDecision(false, "likely_media_or_tv", 0.1)
+        }
+        if (!hasIntent && duration != null && duration < MIN_FALLBACK_DURATION_MS) {
+            return ConversationQualityDecision(false, "too_short_duration_without_intent", 0.15)
+        }
+        if (
+            !hasIntent &&
+            duration != null &&
+            source in setOf(FallbackSource.ACCESSIBILITY_CAPTION, FallbackSource.LIVE_CAPTION_NOTIFICATION) &&
+            duration < MIN_CAPTION_DURATION_MS
+        ) {
+            return ConversationQualityDecision(false, "caption_duration_too_short_without_intent", 0.18)
         }
 
         val words = lower.split(Regex("[^a-z0-9']+")).filter { it.isNotBlank() }
@@ -94,4 +112,7 @@ object ConversationQualityFilter {
         }
         return ConversationQualityDecision(true, "conversation_candidate", score)
     }
+
+    private const val MIN_FALLBACK_DURATION_MS = 1_200L
+    private const val MIN_CAPTION_DURATION_MS = 2_500L
 }

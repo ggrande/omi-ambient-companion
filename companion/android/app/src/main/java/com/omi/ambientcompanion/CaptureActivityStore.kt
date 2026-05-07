@@ -17,10 +17,19 @@ class CaptureActivityStore(context: Context) {
 
     @Synchronized
     fun markSynced(sessionIds: Collection<String>) {
+        markStatus(sessionIds, "synced")
+    }
+
+    @Synchronized
+    fun markFiltered(sessionIds: Collection<String>) {
+        markStatus(sessionIds, "filtered")
+    }
+
+    private fun markStatus(sessionIds: Collection<String>, status: String) {
         if (sessionIds.isEmpty()) return
         val wanted = sessionIds.toSet()
         val items = readItems().map {
-            if (wanted.contains(it.optString("session_id"))) it.put("status", "synced") else it
+            if (wanted.contains(it.optString("session_id"))) it.put("status", status) else it
         }
         writeItems(items)
     }
