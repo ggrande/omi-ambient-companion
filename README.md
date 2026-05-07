@@ -83,10 +83,6 @@ The Ambient Second Brain Controller plugin is optional. Direct Omi audio sync wo
 
 See `plugins/ambient-second-brain-controller/README.md`.
 
-## Voice Infrastructure Research
-
-Krisp VIVA 2.0 is tracked as an optional controller-side investigation, not a default Android dependency. See `VOICE_INFRASTRUCTURE_RESEARCH.md`.
-
 ## Low-Power Experiments
 
 True Android DSP hotword access is not a general third-party ambient mic API, so this repo uses a visible low-duty-cycle sampled VAD profile plus rolling caption/notification context. See `LOW_POWER_MIC_EXPERIMENTS.md`.

@@ -105,7 +105,7 @@ The next likely improvements are:
 - adaptive sampled VAD interval: 60 s while quiet, 5-10 s after captions/meeting notifications,
 - conversation score that combines captions, foreground app, route, placement, RMS, and Omi discard feedback,
 - delayed local STT so Android recognizer only runs when raw Omi sync returns no server speech,
-- controller-side experiments with Krisp VIVA 2.0 or another voice infrastructure provider for turn/VAD metadata.
+- optional controller-side signal experiments for turn/VAD metadata after an implementation plan and privacy review.
 
 ## Sources
 
