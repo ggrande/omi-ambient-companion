@@ -24,6 +24,7 @@ label: Omi Ambient Companion
 - Filters obvious fallback-text junk before creating fallback conversations.
 - Supports optional desk-only and face-down-on-desk placement gates.
 - Preserves Android privacy indicators and persistent notifications.
+- Shows a simplified dashboard for capture, sync, and detection flows, with setup, advanced controls, and diagnostics in submenus.
 
 ## Build Companion APK
 

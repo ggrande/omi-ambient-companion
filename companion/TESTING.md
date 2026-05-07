@@ -77,7 +77,7 @@ Without the optional controller, the companion still uses direct Omi auth for au
 8. Return to the app and check `Preflight`.
 9. Optional: open `Advanced settings`, tap `Check voice profile`, and enable `Desk gate` or `Face-down gate` if you want placement-gated capture.
 10. Confirm `Local speech recognition` is on unless you are intentionally testing without Android on-device STT fallback.
-11. Optional: tap `Low power context` if you are testing battery behavior and pre-mic rolling context.
+11. Optional: tap `Advanced` > `Low power context` if you are testing battery behavior and pre-mic rolling context.
 
 The `Preflight` section should show `OK` for Omi user id, Omi auth token, microphone, notifications, accessibility, notification listener, and battery. Plugin rows are optional and may show `SKIPPED`.
 
@@ -140,8 +140,8 @@ Before collecting test audio:
 1. Keep full mic capture off.
 2. Open Live Transcribe, Live Caption, or a meeting app with captions.
 3. Speak for 1-2 minutes while the companion remains idle.
-4. Confirm diagnostics show `rolling_context` entries and the app UI shows a rolling context count.
-5. Tap `Start`, speak again, then share diagnostics.
+4. Confirm the main dashboard shows rolling context activity, then open `Testing` and confirm diagnostics show `rolling_context` entries.
+5. Tap `Start`, speak again, then use `Testing` > `Share`.
 6. Confirm the current session includes `pre_mic_context` summarizing recent caption/notification context.
 
 ### Low Power Context Profile
@@ -150,6 +150,13 @@ Before collecting test audio:
 2. Tap `Low power context`.
 3. Confirm sampled VAD is enabled with a long interval, continuous mic watch is off, and rolling context is 5 minutes.
 4. Run a 30-minute battery probe and record battery percent, rolling context count, raw audio spool count, and Omi trace/discard state.
+
+### Main Dashboard
+
+1. Confirm normal controls are visible without scrolling through raw diagnostics: `Start`, `Sync`, `Pause`, `Stop`, and `Private`.
+2. Confirm `Detection flows` shows separate context and mic flow status.
+3. Tap `Review context` and `Review mic` to inspect each flow.
+4. Confirm full preflight, audit log, and diagnostics are only shown under `Testing`.
 
 ### Communication Awareness
 

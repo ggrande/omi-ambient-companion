@@ -26,6 +26,7 @@ This is not an Omi plugin and does not modify the official Omi app. The Ambient 
 - Uses context triggers such as meeting/call notifications, Live Transcribe/Sound Notifications, wired headset, Bluetooth audio, and SCO route changes. By default these keep the app armed and idle; automatic mic start from those triggers requires explicit continuous mic watch consent.
 - Filters obvious fallback-text junk locally before creating Omi fallback conversations, including self-notifications, short UI fragments, and likely TV/movie/music captions.
 - Keeps a rolling context window from captions, transcript surfaces, and relevant notifications so the app can show what happened before full mic capture started.
+- Shows a cleaner main dashboard for normal use. Permissions/setup, advanced controls, and testing diagnostics remain available from `Setup`, `Advanced`, and `Testing`.
 - Can check whether the signed-in Omi account has a trained speech profile so raw Omi uploads can benefit from Omi's server-side speaker attribution when available.
 - Optional placement gates can keep capture armed but blocked unless the phone appears stationary/off-body on a desk, with a stricter face-down-on-desk mode.
 - Shows a structured diagnostics snapshot in the app UI for field testing.
@@ -77,7 +78,7 @@ It installs next to the official/published Omi app and does not replace or modif
 12. For junk reduction, open `Advanced settings` and leave `Junk filter` on. Optionally enable `Desk gate` or `Face-down gate` if you only want capture while the phone appears to be resting on a desk.
 13. Leave `Minimum raw audio upload` at `4s` unless you are seeing many tiny accidental clips. Increase it from `Advanced settings` for stricter upload reduction.
 14. Leave `Local speech recognition` on unless Android's on-device recognizer is causing failures or you do not want local fallback transcripts.
-15. For battery testing, tap `Low power context` in `Advanced settings` and inspect the rolling context diagnostics before starting full mic capture.
+15. For battery testing, tap `Advanced` > `Low power context`, then use `Testing` to inspect rolling context diagnostics before starting full mic capture.
 
 Optional plugin setup:
 

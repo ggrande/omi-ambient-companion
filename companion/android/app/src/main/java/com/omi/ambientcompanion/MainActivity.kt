@@ -118,29 +118,17 @@ class MainActivity : Activity() {
     private fun buildUi(): View {
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(36, 48, 36, 36)
+            setPadding(32, 44, 32, 32)
             setBackgroundColor(0xff050507.toInt())
         }
         root.addView(text("Omi Ambient Companion", 26, bold = true))
-        root.addView(text("Direct Omi audio sync with local capture, VAD, captions, and optional plugin control.", 14))
+        root.addView(text("Capture, context, and Omi sync.", 14))
 
-        status = text("Status: ${AmbientForegroundMicService.lastHealthState().name}", 16, bold = true)
+        status = text("Idle", 22, bold = true)
         root.addView(status)
-        signal = text(AudioSignalStore.label(), 14, bold = true)
-        root.addView(signal)
-        root.addView(text("Detection flows", 18, bold = true))
-        flowStatus = text("", 12, bold = true)
-        root.addView(flowStatus)
-        root.addView(row(
-            button("Review context") { showFlowDialog("Rolling context", RollingContextStore(this).stats().toString(2)) },
-            button("Review mic") { showFlowDialog("Mic acoustic flow", AudioSignalStore.snapshot().toString(2)) },
-        ))
         omiAuthStatus = text(omiAuthLabel(), 12, bold = true)
         root.addView(omiAuthStatus)
-        root.addView(row(
-            button("Sign in with Omi") { signInWithOmi() },
-            button("Sign out Omi") { signOutOmi() },
-        ))
+
         root.addView(row(
             button("Start") { startFullCapture() },
             button("Sync") { AmbientForegroundMicService.command(this, AmbientForegroundMicService.ACTION_FLUSH_SYNC) },
@@ -150,23 +138,43 @@ class MainActivity : Activity() {
             button("Stop") { AmbientForegroundMicService.command(this, AmbientForegroundMicService.ACTION_STOP) },
             button("Private") { AmbientForegroundMicService.command(this, AmbientForegroundMicService.ACTION_PRIVATE) },
         ))
-        root.addView(button("Permissions & setup") { showSetupDialog() })
-        root.addView(button("Advanced settings") { showAdvancedDialog() })
-        root.addView(text("Last 15 minutes", 18, bold = true))
+
+        root.addView(text("Detection flows", 18, bold = true))
+        flowStatus = text("", 12, bold = true)
+        root.addView(flowStatus)
+        root.addView(row(
+            button("Review context") { showFlowDialog("Rolling context", RollingContextStore(this).stats().toString(2)) },
+            button("Review mic") { showFlowDialog("Mic acoustic flow", AudioSignalStore.snapshot().toString(2)) },
+        ))
+
+        root.addView(text("Sync", 18, bold = true))
+        storage = text("", 12, bold = true)
+        root.addView(storage)
+
+        root.addView(text("Activity", 18, bold = true))
         chartRow = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.BOTTOM
             setPadding(0, 6, 0, 6)
         }
         root.addView(chartRow, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(58)))
+
+        signal = text("", 12)
+        root.addView(signal)
+
+        root.addView(text("Tools", 18, bold = true))
+        root.addView(row(
+            button("Setup") { showSetupDialog() },
+            button("Testing") { showTestingDialog() },
+            button("Advanced") { showAdvancedDialog() },
+        ))
+        root.addView(row(
+            button("Sign in") { signInWithOmi() },
+            button("Sign out") { signOutOmi() },
+        ))
+
         preflight = text("", 12)
-        root.addView(text("Preflight", 18, bold = true))
-        root.addView(preflight)
-        storage = text("", 12)
-        root.addView(storage)
         audit = text("", 12)
-        root.addView(text("Recent log", 18, bold = true))
-        root.addView(audit)
         diagnostics = text("", 12)
         refreshPreflight()
         refreshStorage()
@@ -529,19 +537,10 @@ class MainActivity : Activity() {
                 val fallback = FallbackSegmentQueue(this).stats()
                 val rollingContext = RollingContextStore(this).stats()
                 storage.text = buildString {
-                    appendLine("Sync: ${prefs.lastSyncLabel}")
-                    appendLine("Omi trace: ${prefs.lastOmiSyncTrace}")
-                    appendLine(AudioSystemSignals.label(this@MainActivity))
-                    appendLine(
-                        "Audio spool: ${spool["pending_count"]} pending, ${spool["synced_count"]} synced, " +
-                            "${spool["filtered_short_count"]} filtered short, " +
-                            "${formatBytes((spool["bytes"] as? Number)?.toLong() ?: 0L)}, oldest pending ${spool["oldest_pending_seconds"]}s",
-                    )
-                    appendLine("Fallback text: ${fallback["pending_count"]} pending, sources=${fallback["sources"]}")
-                    appendLine("Rolling context: ${rollingContext.optInt("count")} item(s), candidates=${rollingContext.optInt("conversation_candidates")}, window=${rollingContext.optInt("window_seconds")}s")
-                    appendLine("Local speech recognition: ${if (prefs.allowLocalSttFallback) "on" else "off"}, statuses=${spool["local_stt_statuses"]}")
-                    appendLine("Session: ${currentSession?.optString("status", "idle") ?: "idle"} ${currentSession?.optString("reason", "") ?: ""}")
-                    appendLine("Foreground: ${ContextSignals.foregroundPackage.orEmpty().ifBlank { "unknown" }}")
+                    appendLine(prefs.lastSyncLabel)
+                    appendLine("Omi: ${prefs.lastOmiSyncTrace}")
+                    appendLine("${spool["pending_count"]} audio pending, ${fallback["pending_count"]} fallback pending, ${rollingContext.optInt("count")} context item(s)")
+                    append("Session: ${currentSession?.optString("status", "idle") ?: "idle"}")
                 }.trim()
             }
             if (::signal.isInitialized) signal.text = AudioSignalStore.label()
@@ -700,6 +699,48 @@ class MainActivity : Activity() {
             .setMessage(body)
             .setPositiveButton("Done", null)
             .show()
+    }
+
+    private fun showTestingDialog() {
+        refreshPreflight()
+        refreshAudit()
+        refreshDiagnostics()
+        val body = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(24, 12, 24, 12)
+            setBackgroundColor(0xff050507.toInt())
+            addView(text("Status", 16, bold = true))
+            addView(preflight)
+            addView(text("Recent log", 16, bold = true))
+            addView(audit)
+            addView(text("Diagnostics", 16, bold = true))
+            addView(row(
+                button("Refresh") {
+                    refreshPreflight()
+                    refreshAudit()
+                    refreshDiagnostics()
+                },
+                button("Share") { shareDiagnostics() },
+            ))
+            addView(diagnostics)
+        }
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Testing & diagnostics")
+            .setView(ScrollView(this).apply { addView(body) })
+            .setPositiveButton("Done") { _, _ ->
+                resetHiddenDiagnosticsViews()
+            }
+            .show()
+        dialog.setOnDismissListener { resetHiddenDiagnosticsViews() }
+    }
+
+    private fun resetHiddenDiagnosticsViews() {
+        preflight = text("", 12)
+        audit = text("", 12)
+        diagnostics = text("", 12)
+        refreshPreflight()
+        refreshAudit()
+        refreshDiagnostics()
     }
 
     private fun detectionFlowLabel(): String {
