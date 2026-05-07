@@ -29,6 +29,12 @@ class DiagnosticsStore(context: Context) {
                     .put("window_ms", prefs.sampledVadWindowMs)
                     .put("interval_ms", prefs.sampledVadIntervalMs),
             )
+            .put(
+                "local_speech_recognition",
+                JSONObject()
+                    .put("enabled", prefs.allowLocalSttFallback)
+                    .put("android_on_device_only", true),
+            )
             .put("context", ContextSignals.snapshot())
             .put("spool", JSONObject(spoolStats))
             .put("fallback_segments", JSONObject(fallbackStats))

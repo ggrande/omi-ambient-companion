@@ -244,6 +244,7 @@ class OmiAuthClient(private val context: Context) {
                 val segmentCount = json?.optJSONArray("transcript_segments")?.length() ?: -1
                 val title = json?.optJSONObject("structured")?.optString("title").orEmpty()
                 val source = json?.optString("source").orEmpty()
+                val discarded = json?.optBoolean("discarded", false) ?: false
                 audit.record(
                     "omi_conversation_trace",
                     mapOf(
@@ -252,10 +253,11 @@ class OmiAuthClient(private val context: Context) {
                         "http_status" to response.status,
                         "title" to title.take(80),
                         "source" to source,
+                        "discarded" to discarded,
                         "transcript_segments" to segmentCount,
                     ),
                 )
-                prefs.lastOmiSyncTrace = "Trace $phase: ${ids.size} id(s), $id status ${response.status}, segments $segmentCount"
+                prefs.lastOmiSyncTrace = "Trace $phase: ${ids.size} id(s), $id status ${response.status}, discarded=$discarded, segments $segmentCount"
             }
             return
         }
@@ -281,7 +283,7 @@ class OmiAuthClient(private val context: Context) {
                 "body" to recent.body.take(180),
             ),
         )
-        prefs.lastOmiSyncTrace = "Trace $phase: no ids returned; recent ${recent.status}, count ${memories.length()}"
+        prefs.lastOmiSyncTrace = "Trace $phase: no ids returned; recent ${recent.status}, count ${memories.length()}, first=${firstId.take(8).ifBlank { "none" }} discarded=$firstDiscarded"
     }
 
     private fun pollSyncJob(baseUrl: String, body: String, headers: Map<String, String>, meta: SpoolMetadata): OmiAudioSyncResult {

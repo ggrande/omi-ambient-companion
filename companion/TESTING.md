@@ -76,6 +76,7 @@ Without the optional controller, the companion still uses direct Omi auth for au
 7. Allow unrestricted or exempt background operation.
 8. Return to the app and check `Preflight`.
 9. Optional: open `Advanced settings`, tap `Check voice profile`, and enable `Desk gate` or `Face-down gate` if you want placement-gated capture.
+10. Confirm `Local speech recognition` is on unless you are intentionally testing without Android on-device STT fallback.
 
 The `Preflight` section should show `OK` for Omi user id, Omi auth token, microphone, notifications, accessibility, notification listener, and battery. Plugin rows are optional and may show `SKIPPED`.
 
@@ -124,6 +125,14 @@ Before collecting test audio:
 1. Enable Live Transcribe or open a meeting app with captions.
 2. Confirm the notification/accessibility triggers show in the audit log.
 3. Confirm fallback entries use `accessibility_caption` or `live_caption`.
+
+### Local Speech Recognition Toggle
+
+1. Open `Advanced settings`.
+2. Confirm `Local speech recognition` is on by default.
+3. Capture and close a short speech session.
+4. Confirm diagnostics show local speech recognition enabled and a local STT status such as `completed`, `failed`, or `unavailable`.
+5. Turn `Local speech recognition` off, capture another session, and confirm local STT does not run while raw audio sync still works.
 
 ### Communication Awareness
 

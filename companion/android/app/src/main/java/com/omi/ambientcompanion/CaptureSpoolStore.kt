@@ -136,6 +136,10 @@ class CaptureSpoolStore(private val context: Context) {
             "pending_count" to pending.size,
             "synced_count" to items.count { it.status == "synced" },
             "filtered_short_count" to items.count { it.status == "filtered_short" },
+            "local_stt_statuses" to items
+                .map { it.localSttStatus ?: "not_started" }
+                .groupingBy { it.substringBefore(':') }
+                .eachCount(),
             "bytes" to items.sumOf { it.bytes },
             "oldest_pending_seconds" to oldestPendingSeconds,
             "max_storage_mb" to prefs.maxStorageMb,

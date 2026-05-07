@@ -26,6 +26,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ScrollView
+import android.widget.Switch
 import android.widget.TextView
 import org.json.JSONObject
 import kotlin.concurrent.thread
@@ -338,6 +339,10 @@ class MainActivity : Activity() {
             addView(text("Idle notification: ${if (prefs.armedStatusNotificationEnabled) "on" else "off"}", 12))
             addView(text("Sampled VAD: ${if (prefs.sampledVadEnabled) "on (${prefs.sampledVadWindowMs}ms every ${prefs.sampledVadIntervalMs / 1000}s)" else "off"}", 12))
             addView(text("Continuous mic watch: ${if (prefs.continuousMicWatchEnabled) "on" else "off"}", 12))
+            addView(switchRow("Local speech recognition", prefs.allowLocalSttFallback) { enabled ->
+                prefs.allowLocalSttFallback = enabled
+                AuditLog(this@MainActivity).record("local_speech_recognition_changed", mapOf("enabled" to enabled))
+            })
             addView(text("Junk filter: ${if (prefs.junkFilterEnabled) "on" else "off"}", 12))
             addView(text(DevicePlacementMonitor.label(prefs), 12))
             addView(text("Minimum raw audio upload: ${prefs.minAudioUploadSeconds}s", 12))
@@ -504,6 +509,7 @@ class MainActivity : Activity() {
                             "${formatBytes((spool["bytes"] as? Number)?.toLong() ?: 0L)}, oldest pending ${spool["oldest_pending_seconds"]}s",
                     )
                     appendLine("Fallback text: ${fallback["pending_count"]} pending, sources=${fallback["sources"]}")
+                    appendLine("Local speech recognition: ${if (prefs.allowLocalSttFallback) "on" else "off"}, statuses=${spool["local_stt_statuses"]}")
                     appendLine("Session: ${currentSession?.optString("status", "idle") ?: "idle"} ${currentSession?.optString("reason", "") ?: ""}")
                     appendLine("Foreground: ${ContextSignals.foregroundPackage.orEmpty().ifBlank { "unknown" }}")
                 }.trim()
@@ -582,6 +588,7 @@ class MainActivity : Activity() {
                 appendLine("Sampled VAD: ${if (prefs.sampledVadEnabled) "${prefs.sampledVadWindowMs}ms checks every ${prefs.sampledVadIntervalMs / 1000}s" else "off"}")
                 appendLine("Auto segment rollover: ${prefs.maxActiveSegmentSeconds}s")
                 appendLine("Minimum raw audio upload: ${prefs.minAudioUploadSeconds}s")
+                appendLine("Local speech recognition: ${if (prefs.allowLocalSttFallback) "on" else "off"}")
                 appendLine("Junk filter: ${if (prefs.junkFilterEnabled) "on" else "off"}")
                 appendLine(DevicePlacementMonitor.label(prefs))
                 appendLine("Omi trained voice profile: ${speechProfileLabel()}")
@@ -710,6 +717,17 @@ class MainActivity : Activity() {
             setTextColor(0xffffffff.toInt())
             setBackgroundColor(0xff5f5f64.toInt())
             setOnClickListener { action() }
+        }
+    }
+
+    private fun switchRow(label: String, checked: Boolean, action: (Boolean) -> Unit): Switch {
+        return Switch(this).apply {
+            text = label
+            isChecked = checked
+            textSize = 14f
+            setTextColor(0xffffffff.toInt())
+            setPadding(0, 8, 0, 8)
+            setOnCheckedChangeListener { _, isChecked -> action(isChecked) }
         }
     }
 

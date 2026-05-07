@@ -20,7 +20,7 @@ label: Omi Ambient Companion
 - Runs visible Android foreground microphone capture only after explicit user consent.
 - Uses local VAD, RAM pre-roll, encrypted app-private PCM spool, and direct Omi raw audio sync.
 - Uploads raw PCM WAL-compatible audio to Omi `/v2/sync-local-files` using the signed-in user's Omi auth token.
-- Uses local STT/caption fallback only when audio is unavailable or Omi raw audio produces no server speech.
+- Uses local STT/caption fallback only when audio is unavailable or Omi raw audio produces no server speech. Local speech recognition is on by default and can be turned off in `Advanced settings`.
 - Filters obvious fallback-text junk before creating fallback conversations.
 - Supports optional desk-only and face-down-on-desk placement gates.
 - Preserves Android privacy indicators and persistent notifications.
@@ -82,6 +82,10 @@ The Ambient Second Brain Controller plugin is optional. Direct Omi audio sync wo
 - accountability/task workflows.
 
 See `plugins/ambient-second-brain-controller/README.md`.
+
+## Voice Infrastructure Research
+
+Krisp VIVA 2.0 is tracked as an optional controller-side investigation, not a default Android dependency. See `VOICE_INFRASTRUCTURE_RESEARCH.md`.
 
 ## Safety
 
