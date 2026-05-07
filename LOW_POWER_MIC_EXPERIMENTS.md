@@ -42,6 +42,26 @@ The context window is not raw audio and is not automatically treated as a normal
 - attach a short `pre_mic_context` summary to local capture session metadata,
 - improve field diagnostics when Omi produces no conversation or marks one discarded.
 
+## Two Detection Flows
+
+The app now shows two separate detection flows on the main dashboard:
+
+- Context flow: caption/transcript/notification context that can run while full mic capture is idle.
+- Mic flow: sampled/full `AudioRecord` VAD and acoustic capture state.
+
+Use `Review context` and `Review mic` to inspect whether each flow thinks a conversation is present.
+
+## Acoustic Reinforcement
+
+The mic flow uses more than raw RMS now:
+
+- volume level in dBFS,
+- short-frame volume trend in dB,
+- zero-crossing frequency estimate,
+- a lightweight voice-band score.
+
+These are intentionally cheap features for battery testing. They reinforce the simple VAD trigger, but they are not speaker identification and they are not a replacement for Omi's server-side transcription/discard logic.
+
 ## Suggested Self-Test Matrix
 
 ### Baseline

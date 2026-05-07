@@ -40,6 +40,7 @@ class MainActivity : Activity() {
     private lateinit var preflight: TextView
     private lateinit var omiAuthStatus: TextView
     private lateinit var signal: TextView
+    private lateinit var flowStatus: TextView
     private lateinit var chartRow: LinearLayout
     private val uiHandler = Handler(Looper.getMainLooper())
     private val liveRefresh = object : Runnable {
@@ -127,6 +128,13 @@ class MainActivity : Activity() {
         root.addView(status)
         signal = text(AudioSignalStore.label(), 14, bold = true)
         root.addView(signal)
+        root.addView(text("Detection flows", 18, bold = true))
+        flowStatus = text("", 12, bold = true)
+        root.addView(flowStatus)
+        root.addView(row(
+            button("Review context") { showFlowDialog("Rolling context", RollingContextStore(this).stats().toString(2)) },
+            button("Review mic") { showFlowDialog("Mic acoustic flow", AudioSignalStore.snapshot().toString(2)) },
+        ))
         omiAuthStatus = text(omiAuthLabel(), 12, bold = true)
         root.addView(omiAuthStatus)
         root.addView(row(
@@ -537,6 +545,7 @@ class MainActivity : Activity() {
                 }.trim()
             }
             if (::signal.isInitialized) signal.text = AudioSignalStore.label()
+            if (::flowStatus.isInitialized) flowStatus.text = detectionFlowLabel()
             refreshActivityChart()
         }.onFailure { recordUiRefreshFailure("storage", it) }
     }
@@ -683,6 +692,25 @@ class MainActivity : Activity() {
             .putExtra(Intent.EXTRA_SUBJECT, "Omi Ambient Companion diagnostics")
             .putExtra(Intent.EXTRA_TEXT, text)
         startActivity(Intent.createChooser(intent, "Share diagnostics"))
+    }
+
+    private fun showFlowDialog(title: String, body: String) {
+        AlertDialog.Builder(this)
+            .setTitle(title)
+            .setMessage(body)
+            .setPositiveButton("Done", null)
+            .show()
+    }
+
+    private fun detectionFlowLabel(): String {
+        val rolling = RollingContextStore(this).stats()
+        val audio = AudioSignalStore.snapshot()
+        val contextDetected = rolling.optInt("conversation_candidates") > 0
+        val micDetected = audio.optBoolean("conversation_active") || audio.optBoolean("likely_speech")
+        return buildString {
+            appendLine("Context flow: ${if (contextDetected) "conversation context detected" else "no conversation context"} (${rolling.optInt("count")} recent, ${rolling.optInt("conversation_candidates")} candidates)")
+            appendLine("Mic flow: ${if (micDetected) "conversation detected" else "not detected"} (${audio.optDouble("dbfs", -120.0)} dBFS, trend=${audio.optDouble("volume_trend_db", 0.0)}dB, zc=${audio.optDouble("zero_crossing_hz", 0.0)}Hz)")
+        }.trim()
     }
 
     private fun hasPermission(permission: String): Boolean = checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED

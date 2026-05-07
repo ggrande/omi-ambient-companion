@@ -28,6 +28,14 @@ class VadWatchEngineTest {
         assertTrue(vad.drainPreRoll().isNotEmpty())
     }
 
+    @Test
+    fun voiceBandFrequencyReinforcesSpeechDetection() {
+        val result = VadWatchEngine.analyzePcm16(voicedFrame())
+
+        assertTrue(result.zeroCrossingHz in 85.0..950.0)
+        assertTrue(result.voiceBandScore >= 0.65)
+    }
+
     private fun voicedFrame(): ByteArray {
         val samples = 480
         val buffer = ByteBuffer.allocate(samples * 2).order(ByteOrder.LITTLE_ENDIAN)

@@ -7,6 +7,9 @@ import kotlin.math.roundToInt
 object AudioSignalStore {
     @Volatile private var lastDbfs: Double = -120.0
     @Volatile private var lastZeroRatio: Double = 1.0
+    @Volatile private var lastZeroCrossingHz: Double = 0.0
+    @Volatile private var lastVoiceBandScore: Double = 0.0
+    @Volatile private var lastVolumeTrendDb: Double = 0.0
     @Volatile private var lastChunkAtMs: Long = 0
     @Volatile private var lastSoundAtMs: Long = 0
     @Volatile private var lastSpeechAtMs: Long = 0
@@ -21,6 +24,9 @@ object AudioSignalStore {
         val wasConversation = conversationActive
         lastDbfs = result.dbfs
         lastZeroRatio = result.zeroRatio
+        lastZeroCrossingHz = result.zeroCrossingHz
+        lastVoiceBandScore = result.voiceBandScore
+        lastVolumeTrendDb = result.volumeTrendDb
         lastChunkAtMs = now
         samplesSeen += 1
         val sound = result.dbfs > SOUND_DBFS_THRESHOLD && result.zeroRatio < 0.995
@@ -41,6 +47,9 @@ object AudioSignalStore {
         return JSONObject()
             .put("dbfs", rounded(lastDbfs))
             .put("zero_ratio", rounded(lastZeroRatio))
+            .put("zero_crossing_hz", rounded(lastZeroCrossingHz))
+            .put("voice_band_score", rounded(lastVoiceBandScore))
+            .put("volume_trend_db", rounded(lastVolumeTrendDb))
             .put("sound_detected", hasRecentSound(now))
             .put("likely_speech", hasRecentSpeech(now))
             .put("conversation_active", conversationActive)
@@ -55,11 +64,14 @@ object AudioSignalStore {
         val s = snapshot()
         val dbfs = s.optDouble("dbfs", -120.0)
         val zero = s.optDouble("zero_ratio", 1.0)
+        val zc = s.optDouble("zero_crossing_hz", 0.0)
+        val voiceBand = s.optDouble("voice_band_score", 0.0)
+        val trend = s.optDouble("volume_trend_db", 0.0)
         val sound = if (s.optBoolean("sound_detected")) "yes" else "no"
         val speech = if (s.optBoolean("likely_speech")) "yes" else "no"
         val conversation = if (s.optBoolean("conversation_active")) "yes" else "no"
         val chunkAge = s.optLong("last_chunk_ms_ago", -1)
-        return "Sound: $sound | Speech: $speech | Conversation: $conversation\nSignal: ${dbfs} dBFS, zero=$zero, last audio=${if (chunkAge >= 0) "${chunkAge}ms ago" else "never"}"
+        return "Sound: $sound | Speech: $speech | Conversation: $conversation\nSignal: ${dbfs} dBFS, trend=${trend}dB, zc=${zc}Hz, voiceBand=$voiceBand, zero=$zero, last audio=${if (chunkAge >= 0) "${chunkAge}ms ago" else "never"}"
     }
 
     private fun hasRecentSound(now: Long): Boolean = lastSoundAtMs > 0 && now - lastSoundAtMs <= RECENT_MS
