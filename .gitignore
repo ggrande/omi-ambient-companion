@@ -1,0 +1,37 @@
+*.env
+.env
+.env.*
+!.env.example
+
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+
+.DS_Store
+.idea/
+.vscode/
+*.log
+*.tmp
+*.zip
+
+# Android build outputs and local machine config
+**/build/
+**/.gradle/
+**/.kotlin/
+**/local.properties
+**/key.properties
+**/*.apk
+**/*.aab
+
+# Keep the checked-in Gradle wrapper.
+!companion/android/gradlew
+!companion/android/gradlew.bat
+!companion/android/gradle/wrapper/gradle-wrapper.jar
+!companion/android/gradle/wrapper/gradle-wrapper.properties
+
+# Plugin runtime data
+*.db
+*.sqlite
+*.sqlite3
